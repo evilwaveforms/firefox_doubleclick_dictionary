@@ -1,0 +1,1 @@
+# firefox_doubleclick_dictionary
