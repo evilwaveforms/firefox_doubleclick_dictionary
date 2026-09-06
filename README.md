@@ -4,7 +4,7 @@
 
 # Double-click Dictionary for Firefox
 
-A lightweight Firefox extension that shows English definitions when you double-click a word. Definitions, phonetics, and examples come from the separately deployed dictionary data project.
+A lightweight Firefox extension that shows English definitions when you double-click a word. Definitions, phonetics, and examples come from the separately deployed [dictionary data project](https://github.com/evilwaveforms/doubleclick_dictionary_data), which processes Wiktextract data into versioned static assets.
 
 ## Development
 
