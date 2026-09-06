@@ -10,8 +10,8 @@
   color: #202124;
   background: #FFFFFF;
   border: 1px solid #dadce0;
-  border-radius: 4px;
-  box-shadow: 0 4px 14px rgba(60, 64, 67, 0.28);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(60, 64, 67, 0.28);
   font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   text-align: left;
   color-scheme: light;
