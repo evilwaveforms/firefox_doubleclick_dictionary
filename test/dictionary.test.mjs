@@ -97,3 +97,29 @@ test("selects exact case variants before the lowercase fallback", async () => {
   assert.deepEqual(await lookupDictionary(index, "polish", "en", fetcher), { ok: true, entry: lower });
   assert.deepEqual(await lookupDictionary(index, "POLISH", "en", fetcher), { ok: true, entry: lower });
 });
+
+test("prefers a common lowercase entry over a capitalized name-only entry", async () => {
+  const index = {
+    baseUrl: "https://dictionary.example",
+    shardCount: 8192,
+    languages: new Set(["en"]),
+  };
+  const common = {
+    ...entry,
+    word: "deep",
+    meanings: [{
+      partOfSpeech: "adj",
+      definitions: [{ text: "Extending far down from a point of reference." }],
+    }],
+  };
+  const surname = {
+    ...entry,
+    word: "Deep",
+    meanings: [{ partOfSpeech: "name", definitions: [{ text: "A surname." }] }],
+  };
+  const result = await lookupDictionary(index, "Deep", "en", async () => {
+    return Response.json({ schemaVersion: 2, entries: { "en:deep": [common, surname] } });
+  });
+
+  assert.deepEqual(result, { ok: true, entry: common });
+});

@@ -67,13 +67,30 @@ function readEntry(value: unknown): DictionaryEntry | undefined {
   };
 }
 
+function hasOnlyProperNameMeanings(entry: DictionaryEntry): boolean {
+  return entry.meanings.every((meaning) => meaning.partOfSpeech === "name");
+}
+
+function hasCommonMeaning(entry: DictionaryEntry): boolean {
+  return entry.meanings.some((meaning) => meaning.partOfSpeech !== "name");
+}
+
 function readVariant(value: unknown, word: string): DictionaryEntry | undefined {
   if (!Array.isArray(value)) return undefined;
   const variants = value.map(readEntry).filter((entry) => entry !== undefined);
   const spelling = normalizedSpelling(word);
-  return variants.find((entry) => normalizedSpelling(entry.word) === spelling)
-    ?? variants.find((entry) => normalizedSpelling(entry.word) === spelling.toLowerCase())
-    ?? variants[0];
+  const exact = variants.find((entry) => normalizedSpelling(entry.word) === spelling);
+  const lowercase = variants.find((entry) => normalizedSpelling(entry.word) === spelling.toLowerCase());
+  if (
+    exact &&
+    lowercase &&
+    exact !== lowercase &&
+    hasOnlyProperNameMeanings(exact) &&
+    hasCommonMeaning(lowercase)
+  ) {
+    return lowercase;
+  }
+  return exact ?? lowercase ?? variants[0];
 }
 
 async function fetchJson(url: string, fetcher: typeof fetch): Promise<Response> {
