@@ -41,7 +41,7 @@ function cachedResult(key: string): LookupResult | undefined {
 }
 
 async function lookup(message: LookupMessage): Promise<LookupResult> {
-  const word = message.word.toLocaleLowerCase(message.language);
+  const word = message.word;
   const key = `${message.language}:${word}`;
   const cached = cachedResult(key);
   if (cached) return cached;

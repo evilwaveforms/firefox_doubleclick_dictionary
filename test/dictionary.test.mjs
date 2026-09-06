@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { loadDictionaryIndex, lookupDictionary } from "../dist/dictionary.js";
 
 const metadata = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   languages: ["en"],
   shardCount: 8192,
 };
@@ -36,7 +36,7 @@ test("looks up a word in its hashed shard", async () => {
   };
   const result = await lookupDictionary(index, "Hello", "en", async (url) => {
     assert.equal(url, "https://dictionary.example/shards/0268.json");
-    return Response.json({ schemaVersion: 1, entries: { "en:hello": entry } });
+    return Response.json({ schemaVersion: 2, entries: { "en:hello": [entry] } });
   });
   assert.deepEqual(result, { ok: true, entry });
 });
@@ -78,4 +78,22 @@ test("handles malformed successful shard responses", async () => {
     return Response.json({ unexpected: true });
   });
   assert.deepEqual(result, { ok: false, error: "invalid_response" });
+});
+
+test("selects exact case variants before the lowercase fallback", async () => {
+  const index = {
+    baseUrl: "https://dictionary.example",
+    shardCount: 8192,
+    languages: new Set(["en"]),
+  };
+  const lower = { ...entry, word: "polish", sourceUrl: "https://en.wiktionary.org/wiki/polish" };
+  const upper = { ...entry, word: "Polish", sourceUrl: "https://en.wiktionary.org/wiki/Polish" };
+  const fetcher = async () => Response.json({
+    schemaVersion: 2,
+    entries: { "en:polish": [upper, lower] },
+  });
+
+  assert.deepEqual(await lookupDictionary(index, "Polish", "en", fetcher), { ok: true, entry: upper });
+  assert.deepEqual(await lookupDictionary(index, "polish", "en", fetcher), { ok: true, entry: lower });
+  assert.deepEqual(await lookupDictionary(index, "POLISH", "en", fetcher), { ok: true, entry: lower });
 });
