@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="extension/icons/dictionary.svg" alt="Dictionary" width="96" height="96">
+</p>
+
 # Double-click Dictionary for Firefox
 
 A lightweight Firefox extension that shows English definitions when you double-click a word. Definitions, phonetics, and examples come from the separately deployed dictionary data project.
