@@ -7,18 +7,20 @@ const WORD_SEGMENTER = new Intl.Segmenter(undefined, { granularity: "word" });
 
 let popup: HTMLElement | undefined;
 let activeRequest = 0;
-let anchorRect: DOMRect | undefined;
+let anchorRange: Range | undefined;
+let positionRequest: number | undefined;
 
-function selectedWord(): { word: string; rect: DOMRect } | undefined {
+function selectedWord(): { word: string; range: Range } | undefined {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) return undefined;
 
   const word = selection.toString().trim();
   if (!word || word.length > MAX_WORD_LENGTH || !WORD_PATTERN.test(word)) return undefined;
 
-  const rect = selection.getRangeAt(0).getBoundingClientRect();
+  const range = selection.getRangeAt(0).cloneRange();
+  const rect = range.getBoundingClientRect();
   if (!rect.width && !rect.height) return undefined;
-  return { word, rect };
+  return { word, range };
 }
 
 function isEditableTarget(event: MouseEvent): boolean {
@@ -55,12 +57,14 @@ function closePopup(): void {
   activeRequest += 1;
   popup?.remove();
   popup = undefined;
-  anchorRect = undefined;
+  anchorRange = undefined;
 }
 
 function positionPopup(): void {
-  if (!popup || !anchorRect) return;
+  positionRequest = undefined;
+  if (!popup || !anchorRange) return;
 
+  const anchorRect = anchorRange.getBoundingClientRect();
   const popupRect = popup.getBoundingClientRect();
   const maxLeft = window.innerWidth - popupRect.width - VIEWPORT_MARGIN;
   const left = Math.min(Math.max(anchorRect.left, VIEWPORT_MARGIN), Math.max(maxLeft, VIEWPORT_MARGIN));
@@ -72,6 +76,11 @@ function positionPopup(): void {
   popup.style.left = `${Math.round(left)}px`;
   popup.style.top = `${Math.round(top)}px`;
   popup.classList.add("dd-visible");
+}
+
+function schedulePopupPosition(): void {
+  if (positionRequest !== undefined) return;
+  positionRequest = requestAnimationFrame(positionPopup);
 }
 
 function createHeader(word: string, phonetic?: string): HTMLElement {
@@ -91,10 +100,10 @@ function createHeader(word: string, phonetic?: string): HTMLElement {
   return header;
 }
 
-function renderLoading(word: string, rect?: DOMRect): number {
+function renderLoading(word: string, range?: Range): number {
   activeRequest += 1;
   const requestId = activeRequest;
-  if (rect) anchorRect = rect;
+  if (range) anchorRange = range;
 
   if (!popup) {
     popup = createElement("aside", "dd-popup");
@@ -114,7 +123,7 @@ function renderLoading(word: string, rect?: DOMRect): number {
   popup.setAttribute("aria-label", `Definition of ${word}`);
   popup.replaceChildren(createHeader(word), createElement("div", "dd-loading", "Looking up definition…"));
   popup.scrollTop = 0;
-  requestAnimationFrame(positionPopup);
+  schedulePopupPosition();
   return requestId;
 }
 
@@ -156,7 +165,7 @@ function renderEntry(entry: DictionaryEntry): void {
     popup.append(source);
   }
 
-  requestAnimationFrame(positionPopup);
+  schedulePopupPosition();
 }
 
 function renderError(error: LookupResult & { ok: false }, word: string): void {
@@ -169,11 +178,11 @@ function renderError(error: LookupResult & { ok: false }, word: string): void {
   popup.replaceChildren();
   if (existingHeader) popup.append(existingHeader);
   popup.append(createElement("div", "dd-error", message));
-  requestAnimationFrame(positionPopup);
+  schedulePopupPosition();
 }
 
-function requestLookup(word: string, rect?: DOMRect): void {
-  const requestId = renderLoading(word, rect);
+function requestLookup(word: string, range?: Range): void {
+  const requestId = renderLoading(word, range);
   browser.runtime.sendMessage({ type: "lookup", word, language: LANGUAGE })
     .then((result) => {
       if (requestId !== activeRequest || !popup) return;
@@ -195,7 +204,7 @@ document.addEventListener("dblclick", (event) => {
     return;
   }
 
-  requestLookup(selected.word, selected.rect);
+  requestLookup(selected.word, selected.range);
 });
 
 document.addEventListener("pointerdown", (event) => {
@@ -207,7 +216,8 @@ document.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("scroll", (event) => {
+  if (!popup || !anchorRange) return;
   if (event.target instanceof Node && popup?.contains(event.target)) return;
-  closePopup();
+  schedulePopupPosition();
 }, { passive: true, capture: true });
 window.addEventListener("resize", closePopup, { passive: true });
