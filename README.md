@@ -11,7 +11,7 @@ npm install
 npm test
 ```
 
-Set `baseUrl` in `dictionary.config.json` to the Workers Static Assets deployment URL. Keep `http://localhost:8787` while developing against `npx wrangler dev` in the data repository. The build adds the corresponding Firefox host permission to the generated manifest.
+Set `baseUrl` in `dictionary.config.json` to the versioned Workers Static Assets URL. Use `http://localhost:8787/v2` while developing against `npx wrangler dev` in the data repository. The build adds the corresponding Firefox host permission to the generated manifest. When the dictionary schema changes incompatibly, deploy the new versioned directory before updating this URL.
 
 To load the extension locally:
 
@@ -21,6 +21,26 @@ To load the extension locally:
 4. Select `dist/manifest.json`.
 
 Run `npm run package` to create `doubleclick-dictionary.zip` for submission or manual installation.
+
+## Release
+
+For an ordinary dictionary refresh that does not change its JSON format, rebuild and deploy the data repository without changing the extension.
+
+For an incompatible dictionary format change:
+
+1. Increment `SCHEMA_VERSION` in `src/dictionary.ts` to match the data processor.
+2. Change `baseUrl` in `dictionary.config.json` to the new versioned path, such as `/v3`.
+3. Deploy and verify the new dictionary version before releasing the extension.
+4. Build and test the extension:
+
+   ```sh
+   npm test
+   npm run package
+   ```
+
+5. Test `doubleclick-dictionary.zip`, then submit it to the extension store.
+
+Do not release an extension that points to a dictionary schema which has not been deployed yet. The data repository retains the previous schema for users whose extension has not updated.
 
 ## Design
 

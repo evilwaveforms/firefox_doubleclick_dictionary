@@ -19,23 +19,23 @@ const entry = {
 };
 
 test("loads the dictionary index", async () => {
-  const index = await loadDictionaryIndex("https://dictionary.example", async (url) => {
-    assert.equal(url, "https://dictionary.example/metadata.json");
+  const index = await loadDictionaryIndex("https://dictionary.example/v2", async (url) => {
+    assert.equal(url, "https://dictionary.example/v2/metadata.json");
     return Response.json(metadata);
   });
-  assert.equal(index?.baseUrl, "https://dictionary.example");
+  assert.equal(index?.baseUrl, "https://dictionary.example/v2");
   assert.equal(index?.shardCount, 8192);
   assert.deepEqual([...index?.languages ?? []], ["en"]);
 });
 
 test("looks up a word in its hashed shard", async () => {
   const index = {
-    baseUrl: "https://dictionary.example",
+    baseUrl: "https://dictionary.example/v2",
     shardCount: 8192,
     languages: new Set(["en"]),
   };
   const result = await lookupDictionary(index, "Hello", "en", async (url) => {
-    assert.equal(url, "https://dictionary.example/shards/0268.json");
+    assert.equal(url, "https://dictionary.example/v2/shards/0268.json");
     return Response.json({ schemaVersion: 2, entries: { "en:hello": [entry] } });
   });
   assert.deepEqual(result, { ok: true, entry });
