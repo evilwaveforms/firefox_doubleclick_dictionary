@@ -1,0 +1,170 @@
+.dd-popup {
+  all: initial;
+  position: fixed;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  width: min(380px, calc(100vw - 16px));
+  max-height: min(480px, calc(100vh - 16px));
+  overflow: auto;
+  visibility: hidden;
+  color: #202124;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px rgba(60, 64, 67, 0.28);
+  font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-align: left;
+  color-scheme: light;
+}
+
+.dd-popup.dd-visible {
+  visibility: visible;
+}
+
+.dd-popup *,
+.dd-popup *::before,
+.dd-popup *::after {
+  box-sizing: border-box;
+}
+
+.dd-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 10px;
+}
+
+.dd-title {
+  min-width: 0;
+}
+
+.dd-word-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dd-word {
+  overflow-wrap: anywhere;
+  color: #202124;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.dd-phonetic {
+  display: block;
+  margin-top: 2px;
+  color: #70757a;
+  font-size: 13px;
+}
+
+.dd-close,
+.dd-audio {
+  appearance: none;
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  color: #5f6368;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  font: inherit;
+}
+
+.dd-close {
+  width: 28px;
+  height: 28px;
+  font-size: 23px;
+  line-height: 1;
+}
+
+.dd-audio {
+  width: 26px;
+  height: 26px;
+  color: #1a73e8;
+  font-size: 13px;
+}
+
+.dd-close:hover,
+.dd-audio:hover,
+.dd-close:focus-visible,
+.dd-audio:focus-visible {
+  background: #f1f3f4;
+  outline: none;
+}
+
+.dd-audio.dd-playing {
+  background: #e8f0fe;
+}
+
+.dd-body {
+  padding: 0 16px 4px;
+}
+
+.dd-meaning + .dd-meaning {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #edf0f2;
+}
+
+.dd-part-of-speech {
+  margin-bottom: 4px;
+  color: #70757a;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.dd-definitions {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.dd-definition {
+  margin: 0 0 6px;
+  padding-left: 2px;
+  color: #202124;
+}
+
+.dd-example {
+  margin-top: 2px;
+  color: #70757a;
+}
+
+.dd-source {
+  display: block;
+  padding: 6px 16px 10px;
+  color: #70757a;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.dd-source:hover,
+.dd-source:focus-visible {
+  color: #1a73e8;
+  text-decoration: underline;
+  outline: none;
+}
+
+.dd-loading,
+.dd-error {
+  padding: 4px 16px 16px;
+  color: #5f6368;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dd-popup.dd-visible {
+    animation: dd-appear 100ms ease-out;
+  }
+}
+
+@keyframes dd-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
