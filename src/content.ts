@@ -3,6 +3,7 @@ const WORD_PATTERN = /^\p{L}+(?:[\u2019'-]\p{L}+)*$/u;
 const MAX_WORD_LENGTH = 64;
 const VIEWPORT_MARGIN = 8;
 const POPUP_GAP = 8;
+const WORD_SEGMENTER = new Intl.Segmenter(undefined, { granularity: "word" });
 
 let popup: HTMLElement | undefined;
 let activeRequest = 0;
@@ -37,6 +38,19 @@ function createElement<K extends keyof HTMLElementTagNameMap>(
   return element;
 }
 
+function appendLookupText(element: HTMLElement, text: string): void {
+  for (const part of WORD_SEGMENTER.segment(text)) {
+    if (!part.isWordLike || !WORD_PATTERN.test(part.segment) || part.segment.length > MAX_WORD_LENGTH) {
+      element.append(document.createTextNode(part.segment));
+      continue;
+    }
+
+    const word = createElement("span", "dd-lookup-word", part.segment);
+    word.dataset.word = part.segment;
+    element.append(word);
+  }
+}
+
 function closePopup(): void {
   activeRequest += 1;
   popup?.remove();
@@ -60,38 +74,13 @@ function positionPopup(): void {
   popup.classList.add("dd-visible");
 }
 
-function renderLoading(word: string, rect: DOMRect): number {
-  closePopup();
-  const requestId = activeRequest;
-  anchorRect = rect;
-  popup = createElement("aside", "dd-popup");
-  popup.setAttribute("role", "dialog");
-  popup.setAttribute("aria-label", `Definition of ${word}`);
-
-  const header = createElement("header", "dd-header");
-  header.append(createElement("strong", "dd-word", word));
-  const close = createElement("button", "dd-close", "×");
-  close.type = "button";
-  close.title = "Close";
-  close.setAttribute("aria-label", "Close definition");
-  close.addEventListener("click", closePopup);
-  header.append(close);
-  popup.append(header, createElement("div", "dd-loading", "Looking up definition…"));
-  document.documentElement.append(popup);
-  requestAnimationFrame(positionPopup);
-  return requestId;
-}
-
-function renderEntry(entry: DictionaryEntry): void {
-  if (!popup) return;
-  popup.replaceChildren();
-
+function createHeader(word: string, phonetic?: string): HTMLElement {
   const header = createElement("header", "dd-header");
   const title = createElement("div", "dd-title");
   const wordLine = createElement("div", "dd-word-line");
-  wordLine.append(createElement("strong", "dd-word", entry.word));
+  wordLine.append(createElement("strong", "dd-word", word));
   title.append(wordLine);
-  if (entry.phonetic) title.append(createElement("span", "dd-phonetic", entry.phonetic));
+  if (phonetic) title.append(createElement("span", "dd-phonetic", phonetic));
 
   const close = createElement("button", "dd-close", "×");
   close.type = "button";
@@ -99,7 +88,41 @@ function renderEntry(entry: DictionaryEntry): void {
   close.setAttribute("aria-label", "Close definition");
   close.addEventListener("click", closePopup);
   header.append(title, close);
-  popup.append(header);
+  return header;
+}
+
+function renderLoading(word: string, rect?: DOMRect): number {
+  activeRequest += 1;
+  const requestId = activeRequest;
+  if (rect) anchorRect = rect;
+
+  if (!popup) {
+    popup = createElement("aside", "dd-popup");
+    popup.setAttribute("role", "dialog");
+    popup.addEventListener("dblclick", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const word = target.closest(".dd-lookup-word");
+      if (!(word instanceof HTMLElement) || !popup?.contains(word) || !word.dataset.word) return;
+      requestLookup(word.dataset.word);
+    });
+    document.documentElement.append(popup);
+  } else {
+    popup.style.minHeight = `${Math.ceil(popup.getBoundingClientRect().height)}px`;
+  }
+
+  popup.setAttribute("aria-label", `Definition of ${word}`);
+  popup.replaceChildren(createHeader(word), createElement("div", "dd-loading", "Looking up definition…"));
+  popup.scrollTop = 0;
+  requestAnimationFrame(positionPopup);
+  return requestId;
+}
+
+function renderEntry(entry: DictionaryEntry): void {
+  if (!popup) return;
+  popup.style.minHeight = "";
+  popup.replaceChildren();
+  popup.append(createHeader(entry.word, entry.phonetic));
 
   const body = createElement("div", "dd-body");
   for (const meaning of entry.meanings) {
@@ -110,8 +133,12 @@ function renderEntry(entry: DictionaryEntry): void {
     const list = createElement("ol", "dd-definitions");
     for (const definition of meaning.definitions) {
       const item = createElement("li", "dd-definition");
-      item.append(document.createTextNode(definition.text));
-      if (definition.example) item.append(createElement("div", "dd-example", `“${definition.example}”`));
+      appendLookupText(item, definition.text);
+      if (definition.example) {
+        const example = createElement("div", "dd-example");
+        appendLookupText(example, `“${definition.example}”`);
+        item.append(example);
+      }
       list.append(item);
     }
     section.append(list);
@@ -134,6 +161,7 @@ function renderEntry(entry: DictionaryEntry): void {
 
 function renderError(error: LookupResult & { ok: false }, word: string): void {
   if (!popup) return;
+  popup.style.minHeight = "";
   const existingHeader = popup.querySelector(".dd-header");
   const message = error.error === "not_found"
     ? `No English definition found for “${word}”.`
@@ -144,26 +172,30 @@ function renderError(error: LookupResult & { ok: false }, word: string): void {
   requestAnimationFrame(positionPopup);
 }
 
+function requestLookup(word: string, rect?: DOMRect): void {
+  const requestId = renderLoading(word, rect);
+  browser.runtime.sendMessage({ type: "lookup", word, language: LANGUAGE })
+    .then((result) => {
+      if (requestId !== activeRequest || !popup) return;
+      if (result.ok) renderEntry(result.entry);
+      else renderError(result, word);
+    })
+    .catch(() => {
+      if (requestId === activeRequest && popup) {
+        renderError({ ok: false, error: "network" }, word);
+      }
+    });
+}
+
 document.addEventListener("dblclick", (event) => {
-  if (popup?.contains(event.target as Node) || isEditableTarget(event)) return;
+  if ((popup && event.composedPath().includes(popup)) || isEditableTarget(event)) return;
   const selected = selectedWord();
   if (!selected) {
     closePopup();
     return;
   }
 
-  const requestId = renderLoading(selected.word, selected.rect);
-  browser.runtime.sendMessage({ type: "lookup", word: selected.word, language: LANGUAGE })
-    .then((result) => {
-      if (requestId !== activeRequest || !popup) return;
-      if (result.ok) renderEntry(result.entry);
-      else renderError(result, selected.word);
-    })
-    .catch(() => {
-      if (requestId === activeRequest && popup) {
-        renderError({ ok: false, error: "network" }, selected.word);
-      }
-    });
+  requestLookup(selected.word, selected.rect);
 });
 
 document.addEventListener("pointerdown", (event) => {
