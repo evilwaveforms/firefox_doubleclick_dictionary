@@ -13,7 +13,6 @@ interface DictionaryMeaning {
 interface DictionaryEntry {
   word: string;
   phonetic?: string;
-  audioUrl?: string;
   sourceUrl?: string;
   meanings: DictionaryMeaning[];
 }

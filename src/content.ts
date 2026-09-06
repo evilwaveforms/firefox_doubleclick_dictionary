@@ -7,7 +7,6 @@ const POPUP_GAP = 8;
 let popup: HTMLElement | undefined;
 let activeRequest = 0;
 let anchorRect: DOMRect | undefined;
-let audio: HTMLAudioElement | undefined;
 
 function selectedWord(): { word: string; rect: DOMRect } | undefined {
   const selection = window.getSelection();
@@ -40,8 +39,6 @@ function createElement<K extends keyof HTMLElementTagNameMap>(
 
 function closePopup(): void {
   activeRequest += 1;
-  audio?.pause();
-  audio = undefined;
   popup?.remove();
   popup = undefined;
   anchorRect = undefined;
@@ -85,14 +82,6 @@ function renderLoading(word: string, rect: DOMRect): number {
   return requestId;
 }
 
-function playAudio(url: string, button: HTMLButtonElement): void {
-  audio?.pause();
-  audio = new Audio(url);
-  button.classList.add("dd-playing");
-  audio.addEventListener("ended", () => button.classList.remove("dd-playing"), { once: true });
-  audio.play().catch(() => button.classList.remove("dd-playing"));
-}
-
 function renderEntry(entry: DictionaryEntry): void {
   if (!popup) return;
   popup.replaceChildren();
@@ -101,14 +90,6 @@ function renderEntry(entry: DictionaryEntry): void {
   const title = createElement("div", "dd-title");
   const wordLine = createElement("div", "dd-word-line");
   wordLine.append(createElement("strong", "dd-word", entry.word));
-  if (entry.audioUrl) {
-    const listen = createElement("button", "dd-audio", "▶") as HTMLButtonElement;
-    listen.type = "button";
-    listen.title = "Play pronunciation";
-    listen.setAttribute("aria-label", `Play pronunciation of ${entry.word}`);
-    listen.addEventListener("click", () => playAudio(entry.audioUrl!, listen));
-    wordLine.append(listen);
-  }
   title.append(wordLine);
   if (entry.phonetic) title.append(createElement("span", "dd-phonetic", entry.phonetic));
 

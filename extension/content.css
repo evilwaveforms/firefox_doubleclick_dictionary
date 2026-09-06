@@ -60,8 +60,7 @@
   font-size: 13px;
 }
 
-.dd-close,
-.dd-audio {
+.dd-close {
   appearance: none;
   display: inline-grid;
   flex: 0 0 auto;
@@ -83,23 +82,10 @@
   line-height: 1;
 }
 
-.dd-audio {
-  width: 26px;
-  height: 26px;
-  color: #1a73e8;
-  font-size: 13px;
-}
-
 .dd-close:hover,
-.dd-audio:hover,
-.dd-close:focus-visible,
-.dd-audio:focus-visible {
+.dd-close:focus-visible {
   background: #f1f3f4;
   outline: none;
-}
-
-.dd-audio.dd-playing {
-  background: #e8f0fe;
 }
 
 .dd-body {

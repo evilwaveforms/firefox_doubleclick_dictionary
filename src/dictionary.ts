@@ -54,12 +54,10 @@ function readEntry(value: unknown): DictionaryEntry | undefined {
   if (!word || !meanings.length) return undefined;
 
   const phonetic = stringValue(value.phonetic);
-  const audioUrl = httpsUrl(value.audioUrl);
   const sourceUrl = httpsUrl(value.sourceUrl);
   return {
     word,
     ...(phonetic ? { phonetic } : {}),
-    ...(audioUrl ? { audioUrl } : {}),
     ...(sourceUrl ? { sourceUrl } : {}),
     meanings,
   };
