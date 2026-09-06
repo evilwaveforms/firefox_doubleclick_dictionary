@@ -151,19 +151,17 @@
   color: var(--dd-control);
 }
 
-@media (prefers-color-scheme: dark) {
-  .dd-popup {
-    --dd-background: #000000;
-    --dd-border: #3c4043;
-    --dd-control: #a8a8a8;
-    --dd-control-hover: #202124;
-    --dd-divider: #303134;
-    --dd-link: #8ab4f8;
-    --dd-muted: #949494;
-    --dd-shadow: rgba(0, 0, 0, 0.45);
-    --dd-text: #c0c0c0;
-    color-scheme: dark;
-  }
+.dd-popup[data-theme="dark"] {
+  --dd-background: #000000;
+  --dd-border: #3c4043;
+  --dd-control: #a8a8a8;
+  --dd-control-hover: #202124;
+  --dd-divider: #303134;
+  --dd-link: #8ab4f8;
+  --dd-muted: #949494;
+  --dd-shadow: rgba(0, 0, 0, 0.45);
+  --dd-text: #c0c0c0;
+  color-scheme: dark;
 }
 
 @media (prefers-reduced-motion: no-preference) {

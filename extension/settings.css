@@ -1,0 +1,57 @@
+:root {
+  color: #202124;
+  background: #ffffff;
+  color-scheme: light;
+  font: 14px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:root[data-theme="dark"] {
+  color: #c0c0c0;
+  background: #000000;
+  color-scheme: dark;
+}
+
+body {
+  min-width: 220px;
+  margin: 0;
+}
+
+main {
+  padding: 14px 16px 16px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  margin-bottom: 6px;
+  color: #70757a;
+  font-size: 12px;
+}
+
+:root[data-theme="dark"] legend {
+  color: #949494;
+}
+
+label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+input {
+  margin: 0;
+  accent-color: #1a73e8;
+}

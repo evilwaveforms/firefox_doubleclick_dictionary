@@ -4,11 +4,43 @@ const MAX_WORD_LENGTH = 64;
 const VIEWPORT_MARGIN = 8;
 const POPUP_GAP = 8;
 const WORD_SEGMENTER = new Intl.Segmenter(undefined, { granularity: "word" });
+const COLOR_SCHEME = window.matchMedia("(prefers-color-scheme: dark)");
 
 let popup: HTMLElement | undefined;
 let activeRequest = 0;
 let anchorRange: Range | undefined;
 let positionRequest: number | undefined;
+let selectedTheme: Theme = "system";
+
+function isTheme(value: unknown): value is Theme {
+  return value === "system" || value === "light" || value === "dark";
+}
+
+function resolvedTheme(): "light" | "dark" {
+  if (selectedTheme !== "system") return selectedTheme;
+  return COLOR_SCHEME.matches ? "dark" : "light";
+}
+
+function applyTheme(): void {
+  if (popup) popup.dataset.theme = resolvedTheme();
+}
+
+browser.storage.local.get("theme")
+  .then(({ theme }) => {
+    if (isTheme(theme)) selectedTheme = theme;
+    applyTheme();
+  })
+  .catch(() => undefined);
+
+browser.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== "local" || !isTheme(changes.theme?.newValue)) return;
+  selectedTheme = changes.theme.newValue;
+  applyTheme();
+});
+
+COLOR_SCHEME.addEventListener("change", () => {
+  if (selectedTheme === "system") applyTheme();
+});
 
 function selectedWord(): { word: string; range: Range } | undefined {
   const selection = window.getSelection();
@@ -107,6 +139,7 @@ function renderLoading(word: string, range?: Range): number {
 
   if (!popup) {
     popup = createElement("aside", "dd-popup");
+    applyTheme();
     popup.setAttribute("role", "dialog");
     popup.addEventListener("dblclick", (event) => {
       const target = event.target;

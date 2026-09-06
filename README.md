@@ -48,6 +48,7 @@ Do not release an extension that points to a dictionary schema which has not bee
 - Dictionary requests run in a non-persistent background script so pages do not receive dictionary host permissions.
 - The background script fetches dictionary metadata once, hashes each language and word pair, and downloads only its compact shard.
 - Successful and not-found lookups use a bounded in-memory LRU cache. Concurrent requests for the same word share one network request.
+- The toolbar settings menu stores the selected light, dark, or system theme locally.
 - Language is included in the lookup protocol and shard key.
 - The extension sends the selected word to the configured dictionary host only after a valid word is double-clicked. It does not otherwise collect browsing data or store lookup history. Firefox reports this transmission as the `websiteContent` data permission during installation.
 

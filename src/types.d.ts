@@ -1,4 +1,5 @@
 type LanguageCode = string;
+type Theme = "system" | "light" | "dark";
 
 interface DictionaryDefinition {
   text: string;
@@ -36,5 +37,19 @@ declare const browser: {
       ): void;
     };
     sendMessage(message: LookupMessage): Promise<LookupResult>;
+  };
+  storage: {
+    local: {
+      get(key: string): Promise<Record<string, unknown>>;
+      set(values: Record<string, unknown>): Promise<void>;
+    };
+    onChanged: {
+      addListener(
+        listener: (
+          changes: Record<string, { oldValue?: unknown; newValue?: unknown }>,
+          areaName: string,
+        ) => void,
+      ): void;
+    };
   };
 };

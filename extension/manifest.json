@@ -7,6 +7,15 @@
     "48": "icons/dictionary.svg",
     "96": "icons/dictionary.svg"
   },
+  "action": {
+    "default_title": "Double-click Dictionary",
+    "default_icon": "icons/dictionary.svg",
+    "default_popup": "settings.html",
+    "default_area": "navbar"
+  },
+  "permissions": [
+    "storage"
+  ],
   "background": {
     "scripts": ["background.js"],
     "type": "module"
