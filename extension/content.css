@@ -177,18 +177,22 @@
   padding-left: 12px;
 }
 
-.dd-source {
+.dd-source,
+.dd-source:link,
+.dd-source:visited {
   display: block;
   padding: 6px 16px 10px;
-  color: var(--dd-muted);
+  color: var(--dd-muted) !important;
   font-size: 10px;
-  text-decoration: none;
+  opacity: 1 !important;
+  text-decoration: none !important;
+  visibility: visible !important;
 }
 
 .dd-source:hover,
 .dd-source:focus-visible {
-  color: var(--dd-link);
-  text-decoration: underline;
+  color: var(--dd-link) !important;
+  text-decoration: underline !important;
   outline: none;
 }
 
