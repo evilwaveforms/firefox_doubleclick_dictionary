@@ -34,6 +34,10 @@ fieldset {
   border: 0;
 }
 
+fieldset + fieldset {
+  margin-top: 16px;
+}
+
 legend {
   margin-bottom: 6px;
   color: #70757a;
@@ -54,4 +58,18 @@ label {
 input {
   margin: 0;
   accent-color: #1a73e8;
+}
+
+select {
+  width: 100%;
+  padding: 5px 7px;
+  color: inherit;
+  background: inherit;
+  border: 1px solid #bdc1c6;
+  border-radius: 0;
+  font: inherit;
+}
+
+:root[data-theme="dark"] select {
+  border-color: #5f6368;
 }

@@ -1,6 +1,18 @@
-const LANGUAGE: LanguageCode = "en";
-const WORD_PATTERN = /^\p{L}+(?:[\u2019'-]\p{L}+)*$/u;
+const DEFAULT_LANGUAGE: SupportedLanguage = "en";
+const SUPPORTED_LANGUAGES = new Set<SupportedLanguage>(["en", "fi", "sv", "de", "fr", "es"]);
+const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
+  en: "English",
+  fi: "Finnish",
+  sv: "Swedish",
+  de: "German",
+  fr: "French",
+  es: "Spanish",
+};
+const WORD_PATTERN = /^(?:\p{L}\p{M}*)+(?:[\u2019'-](?:\p{L}\p{M}*)+)*$/u;
 const MAX_WORD_LENGTH = 64;
+const MIN_DETECTION_TEXT_LENGTH = 40;
+const MAX_DETECTION_TEXT_LENGTH = 1_000;
+const MAX_DETECTION_TEXT_NODES = 64;
 const VIEWPORT_MARGIN = 8;
 const POPUP_GAP = 8;
 const WORD_SEGMENTER = new Intl.Segmenter(undefined, { granularity: "word" });
@@ -11,9 +23,15 @@ let activeRequest = 0;
 let anchorRange: Range | undefined;
 let positionRequest: number | undefined;
 let selectedTheme: Theme = "system";
+let languagePreference: LanguagePreference = "auto";
 
 function isTheme(value: unknown): value is Theme {
   return value === "system" || value === "light" || value === "dark";
+}
+
+function isLanguagePreference(value: unknown): value is LanguagePreference {
+  return value === "auto" ||
+    typeof value === "string" && supportedLanguage(value) === value;
 }
 
 function resolvedTheme(): "light" | "dark" {
@@ -25,17 +43,23 @@ function applyTheme(): void {
   if (popup) popup.dataset.theme = resolvedTheme();
 }
 
-browser.storage.local.get("theme")
-  .then(({ theme }) => {
+browser.storage.local.get(["theme", "language"])
+  .then(({ theme, language }) => {
     if (isTheme(theme)) selectedTheme = theme;
+    if (isLanguagePreference(language)) languagePreference = language;
     applyTheme();
   })
   .catch(() => undefined);
 
 browser.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== "local" || !isTheme(changes.theme?.newValue)) return;
-  selectedTheme = changes.theme.newValue;
-  applyTheme();
+  if (areaName !== "local") return;
+  if (isTheme(changes.theme?.newValue)) {
+    selectedTheme = changes.theme.newValue;
+    applyTheme();
+  }
+  if (isLanguagePreference(changes.language?.newValue)) {
+    languagePreference = changes.language.newValue;
+  }
 });
 
 COLOR_SCHEME.addEventListener("change", () => {
@@ -59,6 +83,89 @@ function isEditableTarget(event: MouseEvent): boolean {
   const target = event.composedPath()[0];
   if (!(target instanceof Element)) return false;
   return Boolean(target.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
+}
+
+function rangeElement(range: Range): Element | undefined {
+  return range.startContainer instanceof Element
+    ? range.startContainer
+    : range.startContainer.parentElement ?? undefined;
+}
+
+function supportedLanguage(language: string | null | undefined): SupportedLanguage | undefined {
+  if (!language) return undefined;
+  const baseLanguage = language.trim().toLowerCase().split(/[-_]/, 1)[0];
+  return SUPPORTED_LANGUAGES.has(baseLanguage as SupportedLanguage)
+    ? baseLanguage as SupportedLanguage
+    : undefined;
+}
+
+function collectDetectionSide(
+  walker: TreeWalker,
+  initial: string,
+  beforeSelection: boolean,
+  limit: number,
+): string {
+  let text = beforeSelection ? initial.slice(-limit) : initial.slice(0, limit);
+  for (let count = 0; text.length < limit && count < MAX_DETECTION_TEXT_NODES; count += 1) {
+    const node = beforeSelection ? walker.previousNode() : walker.nextNode();
+    if (!(node instanceof Text)) break;
+    const remaining = limit - text.length;
+    text = beforeSelection
+      ? node.data.slice(-remaining) + text
+      : text + node.data.slice(0, remaining);
+  }
+  return text;
+}
+
+function detectionText(range: Range): string | undefined {
+  if (!(range.startContainer instanceof Text) || range.endContainer !== range.startContainer) {
+    return undefined;
+  }
+
+  const element = rangeElement(range);
+  const container = element?.closest(
+    "p, li, dd, dt, blockquote, figcaption, caption, td, th, h1, h2, h3, h4, h5, h6",
+  ) ?? element?.parentElement ?? element;
+  if (!container) return undefined;
+
+  const selectedNode = range.startContainer;
+  const selected = selectedNode.data.slice(range.startOffset, range.endOffset);
+  const sideLength = Math.floor((MAX_DETECTION_TEXT_LENGTH - selected.length) / 2);
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  walker.currentNode = selectedNode;
+  const before = collectDetectionSide(
+    walker,
+    selectedNode.data.slice(0, range.startOffset),
+    true,
+    sideLength,
+  );
+  walker.currentNode = selectedNode;
+  const after = collectDetectionSide(
+    walker,
+    selectedNode.data.slice(range.endOffset),
+    false,
+    sideLength,
+  );
+  const text = `${before}${selected}${after}`.replace(/\s+/g, " ").trim();
+  return text && text.length >= MIN_DETECTION_TEXT_LENGTH ? text : undefined;
+}
+
+async function lookupLanguage(range: Range): Promise<SupportedLanguage> {
+  if (languagePreference !== "auto") return languagePreference;
+
+  const declaredLanguage = supportedLanguage(rangeElement(range)?.closest("[lang]")?.getAttribute("lang"));
+  if (declaredLanguage) return declaredLanguage;
+
+  const text = detectionText(range);
+  if (!text) return DEFAULT_LANGUAGE;
+
+  try {
+    const result = await browser.i18n.detectLanguage(text);
+    if (!result.isReliable) return DEFAULT_LANGUAGE;
+    return supportedLanguage(result.languages[0]?.language) ?? DEFAULT_LANGUAGE;
+  } catch {
+    return DEFAULT_LANGUAGE;
+  }
 }
 
 function createElement<K extends keyof HTMLElementTagNameMap>(
@@ -146,7 +253,7 @@ function renderLoading(word: string, range?: Range): number {
       if (!(target instanceof Element)) return;
       const word = target.closest(".dd-lookup-word");
       if (!(word instanceof HTMLElement) || !popup?.contains(word) || !word.dataset.word) return;
-      requestLookup(word.dataset.word);
+      void requestLookup(word.dataset.word);
     });
     document.documentElement.append(popup);
   } else {
@@ -201,12 +308,16 @@ function renderEntry(entry: DictionaryEntry): void {
   schedulePopupPosition();
 }
 
-function renderError(error: LookupResult & { ok: false }, word: string): void {
+function renderError(
+  error: LookupResult & { ok: false },
+  word: string,
+  language: SupportedLanguage,
+): void {
   if (!popup) return;
   popup.style.minHeight = "";
   const existingHeader = popup.querySelector(".dd-header");
   const message = error.error === "not_found"
-    ? `No English definition found for “${word}”.`
+    ? `No ${LANGUAGE_NAMES[language]} dictionary entry found for “${word}”.`
     : "The definition couldn't be loaded. Try again.";
   popup.replaceChildren();
   if (existingHeader) popup.append(existingHeader);
@@ -214,19 +325,21 @@ function renderError(error: LookupResult & { ok: false }, word: string): void {
   schedulePopupPosition();
 }
 
-function requestLookup(word: string, range?: Range): void {
+async function requestLookup(word: string, range?: Range): Promise<void> {
   const requestId = renderLoading(word, range);
-  browser.runtime.sendMessage({ type: "lookup", word, language: LANGUAGE })
-    .then((result) => {
-      if (requestId !== activeRequest || !popup) return;
-      if (result.ok) renderEntry(result.entry);
-      else renderError(result, word);
-    })
-    .catch(() => {
-      if (requestId === activeRequest && popup) {
-        renderError({ ok: false, error: "network" }, word);
-      }
-    });
+  const language = range ? await lookupLanguage(range) : DEFAULT_LANGUAGE;
+  if (requestId !== activeRequest || !popup) return;
+
+  try {
+    const result = await browser.runtime.sendMessage({ type: "lookup", word, language });
+    if (requestId !== activeRequest || !popup) return;
+    if (result.ok) renderEntry(result.entry);
+    else renderError(result, word, language);
+  } catch {
+    if (requestId === activeRequest && popup) {
+      renderError({ ok: false, error: "network" }, word, language);
+    }
+  }
 }
 
 document.addEventListener("dblclick", (event) => {
@@ -237,7 +350,7 @@ document.addEventListener("dblclick", (event) => {
     return;
   }
 
-  requestLookup(selected.word, selected.range);
+  void requestLookup(selected.word, selected.range);
 });
 
 document.addEventListener("pointerdown", (event) => {

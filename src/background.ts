@@ -1,6 +1,5 @@
 import { loadDictionaryIndex, lookupDictionary } from "./dictionary.js";
 
-const SUPPORTED_LANGUAGES = new Set<LanguageCode>(["en"]);
 const MAX_WORD_LENGTH = 64;
 const CACHE_LIMIT = 128;
 const cache = new Map<string, LookupResult>();
@@ -28,7 +27,7 @@ function isLookupMessage(message: unknown): message is LookupMessage {
     candidate.word.length > 0 &&
     candidate.word.length <= MAX_WORD_LENGTH &&
     typeof candidate.language === "string" &&
-    SUPPORTED_LANGUAGES.has(candidate.language)
+    /^[a-z]{2,3}$/.test(candidate.language)
   );
 }
 

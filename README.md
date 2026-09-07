@@ -4,7 +4,7 @@
 
 <h1 align="center">Double-click Dictionary for Firefox</h1>
 
-A lightweight Firefox extension that shows English definitions when you double-click a word. Definitions, phonetics, and examples come from the separately deployed [dictionary data project](https://github.com/evilwaveforms/doubleclick_dictionary_data), which processes Wiktextract data into versioned static assets.
+A lightweight Firefox extension that shows English-language definitions when you double-click a word. It supports English, Finnish, Swedish, German, French, and Spanish entries. Definitions, phonetics, and examples come from the separately deployed [dictionary data project](https://github.com/evilwaveforms/doubleclick_dictionary_data), which processes Wiktextract data into versioned static assets.
 
 ## Development
 
@@ -52,13 +52,14 @@ Do not release an extension that points to a dictionary schema which has not bee
 - Dictionary requests run in a non-persistent background script so pages do not receive dictionary host permissions.
 - The background script fetches dictionary metadata once, hashes each language and word pair, and downloads only its compact shard.
 - Successful and not-found lookups use a bounded in-memory LRU cache. Concurrent requests for the same word share one network request.
-- The toolbar settings menu stores the selected light, dark, or system theme locally.
+- The toolbar settings menu stores the selected theme and lookup language preference locally.
 - Language is included in the lookup protocol and shard key.
-- The extension uses the selected word locally to choose a dictionary shard and requests only that shard. It does not send the word, page URL, or surrounding text, or write lookup history to persistent storage. Firefox reports this lookup-derived request as the `websiteContent` data permission during installation.
+- Automatic language selection first uses the nearest HTML `lang` declaration. If the page does not declare a supported language, Firefox's built-in detector examines up to 1,000 characters of nearby text locally and is used only when its result is reliable. Ambiguous results fall back to English.
+- The extension uses the selected word and detected language locally to choose a dictionary shard and requests only that shard. It does not send the word, page URL, or surrounding text, or write lookup history to persistent storage. Firefox reports this lookup-derived request as the `websiteContent` data permission during installation.
 
 ## Current limitations
 
-- English only.
+- Definitions are written in English because the data is extracted from English Wiktionary.
 - Firefox does not run extensions on protected browser pages such as `about:` pages.
 - No pronunciation audio.
 

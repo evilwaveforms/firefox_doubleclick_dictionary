@@ -1,4 +1,6 @@
 type LanguageCode = string;
+type SupportedLanguage = "en" | "fi" | "sv" | "de" | "fr" | "es";
+type LanguagePreference = "auto" | SupportedLanguage;
 type Theme = "system" | "light" | "dark";
 
 interface DictionaryDefinition {
@@ -29,6 +31,12 @@ interface LookupMessage {
 }
 
 declare const browser: {
+  i18n: {
+    detectLanguage(text: string): Promise<{
+      isReliable: boolean;
+      languages: Array<{ language: string; percentage: number }>;
+    }>;
+  };
   runtime: {
     getURL(path: string): string;
     onMessage: {
@@ -40,7 +48,7 @@ declare const browser: {
   };
   storage: {
     local: {
-      get(key: string): Promise<Record<string, unknown>>;
+      get(key: string | string[]): Promise<Record<string, unknown>>;
       set(values: Record<string, unknown>): Promise<void>;
     };
     onChanged: {
