@@ -196,6 +196,29 @@ function appendLookupText(element: HTMLElement, text: string, language: Supporte
   }
 }
 
+function appendExampleText(element: HTMLElement, text: string, language: SupportedLanguage): void {
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) {
+    appendLookupText(element, `“${text}”`, language);
+    return;
+  }
+
+  const citationText = lines.shift()?.trim() ?? "";
+  const quotationText = lines.join("\n").trim();
+  if (!citationText || !quotationText) {
+    appendLookupText(element, `“${text}”`, language);
+    return;
+  }
+
+  const citation = createElement("span", "dd-example-citation");
+  appendLookupText(citation, citationText, language);
+  element.append(citation);
+
+  const quotation = createElement("span", "dd-example-quotation");
+  appendLookupText(quotation, `“${quotationText}”`, language);
+  element.append(quotation);
+}
+
 function closePopup(): void {
   activeRequest += 1;
   popup?.remove();
@@ -295,7 +318,7 @@ function renderEntry(entry: DictionaryEntry, language: SupportedLanguage): void 
       appendLookupText(item, definition.text, DEFAULT_LANGUAGE);
       if (definition.example) {
         const example = createElement("div", "dd-example");
-        appendLookupText(example, `“${definition.example}”`, language);
+        appendExampleText(example, definition.example, language);
         item.append(example);
       }
       list.append(item);
