@@ -34,14 +34,31 @@
 .dd-popup *::before,
 .dd-popup *::after {
   box-sizing: border-box;
+  font: inherit;
+  letter-spacing: normal;
+  text-align: inherit;
+  text-transform: none;
+}
+
+.dd-popup *::before,
+.dd-popup *::after {
+  content: none;
 }
 
 .dd-header {
+  position: static;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+  width: auto;
+  min-height: 0;
+  margin: 0;
   padding: 10px;
+  color: var(--dd-text);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .dd-title {
