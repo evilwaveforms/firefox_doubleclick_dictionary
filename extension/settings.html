@@ -9,12 +9,6 @@
   <body>
     <main>
       <h1>Double-click Dictionary</h1>
-      <fieldset data-theme-settings>
-        <legend>Theme</legend>
-        <label><input type="radio" name="theme" value="system">System</label>
-        <label><input type="radio" name="theme" value="light">Light</label>
-        <label><input type="radio" name="theme" value="dark">Dark</label>
-      </fieldset>
       <fieldset>
         <legend>Lookup language</legend>
         <select id="language" aria-label="Lookup language">
@@ -26,6 +20,12 @@
           <option value="fr">French</option>
           <option value="es">Spanish</option>
         </select>
+      </fieldset>
+      <fieldset data-theme-settings>
+        <legend>Theme</legend>
+        <label><input type="radio" name="theme" value="system">System</label>
+        <label><input type="radio" name="theme" value="light">Light</label>
+        <label><input type="radio" name="theme" value="dark">Dark</label>
       </fieldset>
     </main>
     <script type="module" src="settings.js"></script>
