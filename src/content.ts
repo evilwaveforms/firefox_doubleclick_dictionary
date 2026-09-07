@@ -153,8 +153,11 @@ function detectionText(range: Range): string | undefined {
 async function lookupLanguage(range: Range): Promise<SupportedLanguage> {
   if (languagePreference !== "auto") return languagePreference;
 
-  const declaredLanguage = supportedLanguage(rangeElement(range)?.closest("[lang]")?.getAttribute("lang"));
-  if (declaredLanguage) return declaredLanguage;
+  const languageElement = rangeElement(range)?.closest("[lang]");
+  if (languageElement && languageElement !== document.documentElement && languageElement !== document.body) {
+    const declaredLanguage = supportedLanguage(languageElement.getAttribute("lang"));
+    if (declaredLanguage) return declaredLanguage;
+  }
 
   const text = detectionText(range);
   if (!text) return DEFAULT_LANGUAGE;

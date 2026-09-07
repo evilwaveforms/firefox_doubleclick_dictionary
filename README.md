@@ -54,7 +54,7 @@ Do not release an extension that points to a dictionary schema which has not bee
 - Successful and not-found lookups use a bounded in-memory LRU cache. Concurrent requests for the same word share one network request.
 - The toolbar settings menu stores the selected theme and lookup language preference locally.
 - Language is included in the lookup protocol and shard key.
-- Automatic language selection first uses the nearest HTML `lang` declaration. If the page does not declare a supported language, Firefox's built-in detector examines up to 1,000 characters of nearby text locally and is used only when its result is reliable. Ambiguous results fall back to English.
+- Automatic language selection first uses a `lang` declaration attached to the selected content. Document-wide language declarations are not trusted because they may describe only the site's interface. Otherwise, Firefox's built-in detector examines up to 1,000 characters of nearby text locally and is used only when its result is reliable. Ambiguous results fall back to English.
 - The extension uses the selected word and detected language locally to choose a dictionary shard and requests only that shard. It does not send the word, page URL, or surrounding text, or write lookup history to persistent storage. Firefox reports this lookup-derived request as the `websiteContent` data permission during installation.
 
 ## Current limitations
