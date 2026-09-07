@@ -14,6 +14,7 @@
   box-sizing: border-box;
   width: min(380px, calc(100vw - 16px));
   max-height: min(480px, calc(100vh - 16px));
+  margin: 0 !important;
   overflow: auto;
   visibility: hidden;
   color: var(--dd-text);
@@ -43,6 +44,10 @@
 .dd-popup *::before,
 .dd-popup *::after {
   content: none;
+}
+
+.dd-popup * {
+  margin-top: 0 !important;
 }
 
 .dd-header {
@@ -89,7 +94,7 @@
 
 .dd-phonetic {
   display: block;
-  margin-top: 2px;
+  margin-top: 2px !important;
   color: var(--dd-muted);
   font-size: 13px;
 }
@@ -127,7 +132,7 @@
 }
 
 .dd-meaning + .dd-meaning {
-  margin-top: 12px;
+  margin-top: 12px !important;
   padding-top: 10px;
   border-top: 1px solid var(--dd-divider);
 }
@@ -142,6 +147,8 @@
 .dd-definitions {
   margin: 0;
   padding-left: 22px;
+  list-style: decimal outside;
+  counter-reset: none;
 }
 
 .dd-definition {
@@ -150,9 +157,24 @@
   color: var(--dd-text);
 }
 
+.dd-definition::marker {
+  line-height: normal;
+}
+
 .dd-example {
-  margin-top: 2px;
+  margin-top: 2px !important;
   color: var(--dd-muted);
+  white-space: pre-line;
+}
+
+.dd-example-citation,
+.dd-example-quotation {
+  display: block;
+}
+
+.dd-example-quotation {
+  margin-top: 4px !important;
+  padding-left: 12px;
 }
 
 .dd-source {
