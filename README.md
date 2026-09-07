@@ -1,10 +1,13 @@
-<p align="center">
-  <img src="extension/icons/dictionary.svg" alt="Dictionary" width="96" height="96">
-</p>
-
-<h1 align="center">Double-click Dictionary for Firefox</h1>
+<h1>Double-click Dictionary for Firefox</h1>
 
 A lightweight Firefox extension that shows English-language definitions when you double-click a word. It supports English, Finnish, Swedish, German, French, and Spanish entries. Definitions, phonetics, and examples come from the separately deployed [dictionary data project](https://github.com/evilwaveforms/doubleclick_dictionary_data), which processes Wiktextract data into versioned static assets.
+
+## Screenshots
+
+<p>
+  <img src="screenshots/light-theme.png" alt="Light theme" width="48%">
+  <img src="screenshots/dark-theme.png" alt="Dark theme" width="48%">
+</p>
 
 ## Development
 
