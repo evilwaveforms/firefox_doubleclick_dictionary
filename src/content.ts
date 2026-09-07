@@ -179,7 +179,7 @@ function createElement<K extends keyof HTMLElementTagNameMap>(
   return element;
 }
 
-function appendLookupText(element: HTMLElement, text: string): void {
+function appendLookupText(element: HTMLElement, text: string, language: SupportedLanguage): void {
   for (const part of WORD_SEGMENTER.segment(text)) {
     if (!part.isWordLike || !WORD_PATTERN.test(part.segment) || part.segment.length > MAX_WORD_LENGTH) {
       element.append(document.createTextNode(part.segment));
@@ -188,6 +188,7 @@ function appendLookupText(element: HTMLElement, text: string): void {
 
     const word = createElement("span", "dd-lookup-word", part.segment);
     word.dataset.word = part.segment;
+    word.dataset.language = language;
     element.append(word);
   }
 }
@@ -256,7 +257,9 @@ function renderLoading(word: string, range?: Range): number {
       if (!(target instanceof Element)) return;
       const word = target.closest(".dd-lookup-word");
       if (!(word instanceof HTMLElement) || !popup?.contains(word) || !word.dataset.word) return;
-      void requestLookup(word.dataset.word);
+      const language = supportedLanguage(word.dataset.language);
+      if (!language) return;
+      void requestLookup(word.dataset.word, undefined, language);
     });
     document.documentElement.append(popup);
   } else {
@@ -286,10 +289,10 @@ function renderEntry(entry: DictionaryEntry, language: SupportedLanguage): void 
     const list = createElement("ol", "dd-definitions");
     for (const definition of meaning.definitions) {
       const item = createElement("li", "dd-definition");
-      appendLookupText(item, definition.text);
+      appendLookupText(item, definition.text, DEFAULT_LANGUAGE);
       if (definition.example) {
         const example = createElement("div", "dd-example");
-        appendLookupText(example, `“${definition.example}”`);
+        appendLookupText(example, `“${definition.example}”`, language);
         item.append(example);
       }
       list.append(item);
@@ -329,9 +332,13 @@ function renderError(
   schedulePopupPosition();
 }
 
-async function requestLookup(word: string, range?: Range): Promise<void> {
+async function requestLookup(
+  word: string,
+  range?: Range,
+  requestedLanguage: SupportedLanguage = DEFAULT_LANGUAGE,
+): Promise<void> {
   const requestId = renderLoading(word, range);
-  const language = range ? await lookupLanguage(range) : DEFAULT_LANGUAGE;
+  const language = range ? await lookupLanguage(range) : requestedLanguage;
   if (requestId !== activeRequest || !popup) return;
 
   try {
