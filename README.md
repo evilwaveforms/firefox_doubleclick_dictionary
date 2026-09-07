@@ -2,7 +2,7 @@
   <img src="extension/icons/dictionary.svg" alt="Dictionary" width="96" height="96">
 </p>
 
-# Double-click Dictionary for Firefox
+<h1 align="center">Double-click Dictionary for Firefox</h1>
 
 A lightweight Firefox extension that shows English definitions when you double-click a word. Definitions, phonetics, and examples come from the separately deployed [dictionary data project](https://github.com/evilwaveforms/doubleclick_dictionary_data), which processes Wiktextract data into versioned static assets.
 
@@ -54,7 +54,7 @@ Do not release an extension that points to a dictionary schema which has not bee
 - Successful and not-found lookups use a bounded in-memory LRU cache. Concurrent requests for the same word share one network request.
 - The toolbar settings menu stores the selected light, dark, or system theme locally.
 - Language is included in the lookup protocol and shard key.
-- The extension sends the selected word to the configured dictionary host only after a valid word is double-clicked. It does not otherwise collect browsing data or store lookup history. Firefox reports this transmission as the `websiteContent` data permission during installation.
+- The extension uses the selected word locally to choose a dictionary shard and requests only that shard. It does not send the word, page URL, or surrounding text, or write lookup history to persistent storage. Firefox reports this lookup-derived request as the `websiteContent` data permission during installation.
 
 ## Current limitations
 
