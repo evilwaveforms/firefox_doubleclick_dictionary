@@ -222,11 +222,14 @@ function schedulePopupPosition(): void {
   positionRequest = requestAnimationFrame(positionPopup);
 }
 
-function createHeader(word: string, phonetic?: string): HTMLElement {
+function createHeader(word: string, phonetic?: string, language?: SupportedLanguage): HTMLElement {
   const header = createElement("header", "dd-header");
   const title = createElement("div", "dd-title");
   const wordLine = createElement("div", "dd-word-line");
   wordLine.append(createElement("strong", "dd-word", word));
+  if (language && language !== DEFAULT_LANGUAGE) {
+    wordLine.append(createElement("span", "dd-language", LANGUAGE_NAMES[language]));
+  }
   title.append(wordLine);
   if (phonetic) title.append(createElement("span", "dd-phonetic", phonetic));
 
@@ -267,11 +270,12 @@ function renderLoading(word: string, range?: Range): number {
   return requestId;
 }
 
-function renderEntry(entry: DictionaryEntry): void {
+function renderEntry(entry: DictionaryEntry, language: SupportedLanguage): void {
   if (!popup) return;
   popup.style.minHeight = "";
+  popup.setAttribute("aria-label", `${LANGUAGE_NAMES[language]} dictionary entry for ${entry.word}`);
   popup.replaceChildren();
-  popup.append(createHeader(entry.word, entry.phonetic));
+  popup.append(createHeader(entry.word, entry.phonetic, language));
 
   const body = createElement("div", "dd-body");
   for (const meaning of entry.meanings) {
@@ -333,7 +337,7 @@ async function requestLookup(word: string, range?: Range): Promise<void> {
   try {
     const result = await browser.runtime.sendMessage({ type: "lookup", word, language });
     if (requestId !== activeRequest || !popup) return;
-    if (result.ok) renderEntry(result.entry);
+    if (result.ok) renderEntry(result.entry, language);
     else renderError(result, word, language);
   } catch {
     if (requestId === activeRequest && popup) {
