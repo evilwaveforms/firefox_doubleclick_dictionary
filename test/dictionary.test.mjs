@@ -123,3 +123,58 @@ test("prefers a common lowercase entry over a capitalized name-only entry", asyn
 
   assert.deepEqual(result, { ok: true, entry: common });
 });
+
+test("prefers a common lowercase entry over a generic surname-first entry", async () => {
+  const index = {
+    baseUrl: "https://dictionary.example",
+    shardCount: 8192,
+    languages: new Set(["en"]),
+  };
+  const common = {
+    ...entry,
+    word: "double",
+    meanings: [{
+      partOfSpeech: "adj",
+      definitions: [{ text: "Made up of two matching or complementary elements." }],
+    }],
+  };
+  const capitalized = {
+    ...entry,
+    word: "Double",
+    meanings: [
+      { partOfSpeech: "name", definitions: [{ text: "A surname." }] },
+      { partOfSpeech: "noun", definitions: [{ text: "A motorsport achievement." }] },
+    ],
+  };
+  const result = await lookupDictionary(index, "Double", "en", async () => {
+    return Response.json({ schemaVersion: 2, entries: { "en:double": [capitalized, common] } });
+  });
+
+  assert.deepEqual(result, { ok: true, entry: common });
+});
+
+test("keeps a specific capitalized proper-name entry", async () => {
+  const index = {
+    baseUrl: "https://dictionary.example",
+    shardCount: 8192,
+    languages: new Set(["en"]),
+  };
+  const lower = {
+    ...entry,
+    word: "mars",
+    meanings: [{ partOfSpeech: "verb", definitions: [{ text: "Damages." }] }],
+  };
+  const capitalized = {
+    ...entry,
+    word: "Mars",
+    meanings: [
+      { partOfSpeech: "name", definitions: [{ text: "The fourth planet in the solar system." }] },
+      { partOfSpeech: "noun", definitions: [{ text: "A representation of the Roman god." }] },
+    ],
+  };
+  const result = await lookupDictionary(index, "Mars", "en", async () => {
+    return Response.json({ schemaVersion: 2, entries: { "en:mars": [lower, capitalized] } });
+  });
+
+  assert.deepEqual(result, { ok: true, entry: capitalized });
+});

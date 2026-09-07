@@ -71,6 +71,11 @@ function hasOnlyProperNameMeanings(entry: DictionaryEntry): boolean {
   return entry.meanings.every((meaning) => meaning.partOfSpeech === "name");
 }
 
+function startsWithGenericSurnameMeaning(entry: DictionaryEntry): boolean {
+  const meaning = entry.meanings[0];
+  return meaning?.partOfSpeech === "name" && meaning.definitions[0]?.text === "A surname.";
+}
+
 function hasCommonMeaning(entry: DictionaryEntry): boolean {
   return entry.meanings.some((meaning) => meaning.partOfSpeech !== "name");
 }
@@ -85,7 +90,7 @@ function readVariant(value: unknown, word: string): DictionaryEntry | undefined 
     exact &&
     lowercase &&
     exact !== lowercase &&
-    hasOnlyProperNameMeanings(exact) &&
+    (hasOnlyProperNameMeanings(exact) || startsWithGenericSurnameMeaning(exact)) &&
     hasCommonMeaning(lowercase)
   ) {
     return lowercase;
