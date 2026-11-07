@@ -382,7 +382,8 @@ async function requestLookup(
 document.addEventListener("dblclick", (event) => {
   if ((popup && event.composedPath().includes(popup)) || isEditableTarget(event)) return;
   const selected = selectedWord();
-  if (!selected) {
+  const selectedElement = selected && rangeElement(selected.range);
+  if (!selected || !selectedElement || !event.composedPath().includes(selectedElement)) {
     closePopup();
     return;
   }
