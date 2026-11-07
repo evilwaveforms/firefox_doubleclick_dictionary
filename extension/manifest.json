@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Double-click Dictionary",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "See an English definition when you double-click a word.",
   "icons": {
     "48": "icons/dictionary.svg",
